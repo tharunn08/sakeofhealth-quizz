@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 60" role="img" aria-label="Sake of Health">
+  <!-- Outer green oval -->
+  <ellipse cx="26" cy="30" rx="24" ry="28" fill="#5aa820"/>
+  <!-- Inner green depth layer -->
+  <ellipse cx="26" cy="29" rx="17" ry="21" fill="#6bbf28" opacity="0.28"/>
+  <!-- Left flame tongue -->
+  <path d="M17 49 C10 41 10 29 15 19 C17 13 20 10 20 10 C18 17 17 26 19 35 Z" fill="#c13b10"/>
+  <!-- Center flame tongue (tallest) -->
+  <path d="M26 51 C19 43 18 31 22 20 C24 14 26 11 26 11 C26 11 28 14 30 20 C34 31 33 43 26 51Z" fill="#c13b10"/>
+  <!-- Right flame tongue -->
+  <path d="M35 49 C42 41 42 29 37 19 C35 13 32 10 32 10 C34 17 35 26 33 35 Z" fill="#c13b10"/>
+  <!-- Flame highlights (lighter orange inner glow) -->
+  <path d="M22 47 C16 39 16 29 20 21 C18 27 18 37 21 45 Z" fill="#e8663a" opacity="0.38"/>
+  <path d="M30 47 C36 39 36 29 32 21 C34 27 34 37 31 45 Z" fill="#e8663a" opacity="0.38"/>
+</svg>
