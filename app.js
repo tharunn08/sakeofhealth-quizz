@@ -57,10 +57,11 @@ const TYPES = {
   sunny: { name: "The Sunny", color: "#F4CB55", shape: "sunny", tagline: "You bring the snacks and keep the group chat alive. You like a gummy that goes around the table.", pick: "the fruity, share-the-pack pick", code: "SOH-SUNNY", url: "" }
 };
 const SHOP_URL = "https://sakeofhealth.in";
+const COUPON_CODE = "SOH-BUYNOW10";
 const $ = (id) => document.getElementById(id);
 const screens = { welcome: $("welcome-screen"), quiz: $("quiz-screen"), results: $("results-screen") };
 let current = 0, selected = null, answers = [], startedAt = 0, endedAt = 0;
-let soundEnabled = false, toastTimer;
+let soundEnabled = false, toastTimer, participant = null, savedThisRun = false;
 
 function showScreen(name) {
   Object.entries(screens).forEach(([key, el]) => {
@@ -71,7 +72,7 @@ function showScreen(name) {
   window.scrollTo({ top: 0, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
 }
 function startQuiz() {
-  current = 0; selected = null; answers = []; startedAt = Date.now(); endedAt = 0;
+  current = 0; selected = null; answers = []; startedAt = Date.now(); endedAt = 0; savedThisRun = false;
   hideCelebration(); showScreen("quiz"); renderQuestion();
 }
 function renderQuestion() {
@@ -89,9 +90,8 @@ function renderQuestion() {
   $("question-title").textContent = q.question;
   $("question-hint").textContent = q.hint;
   $("answers").innerHTML = "";
-  $("feedback").hidden = true; $("feedback").className = "feedback";
-  $("submit-btn").hidden = false; $("submit-btn").disabled = true;
-  $("next-btn").hidden = true;
+  $("next-btn").disabled = true;
+  $("next-btn").innerHTML = current === QUESTIONS.length - 1 ? 'See my gummy match <span class="btn-arrow">→</span>' : 'Next question <span class="btn-arrow">→</span>';
   $("answered-count").textContent = `${answers.length} of ${QUESTIONS.length} answered`;
   $("streak-number").textContent = String(answers.length);
   q.answers.forEach((answer, i) => {
@@ -109,47 +109,24 @@ function renderQuestion() {
   });
 }
 function selectAnswer(index) {
-  // Selection only marks the choice. It never records or advances the answer.
-  if (answers[current] !== undefined) return;
   selected = index;
   [...$("answers").children].forEach((button, i) => {
     button.classList.toggle("selected", i === index);
     button.setAttribute("aria-pressed", String(i === index));
   });
-  $("submit-btn").disabled = false;
-}
-function submitAnswer() {
-  // The user must explicitly press Check answer before this answer is saved.
-  if (selected === null || answers[current] !== undefined) return;
-  const q = QUESTIONS[current], choice = q.answers[selected];
-  answers[current] = { selected, type: choice.type };
-  [...$("answers").children].forEach((button, i) => {
-    button.disabled = true;
-    button.classList.remove("selected");
-    button.classList.toggle("correct", i === selected);
-    button.classList.toggle("dimmed", i !== selected);
-    button.setAttribute("aria-pressed", String(i === selected));
-  });
-  $("submit-btn").hidden = true;
-  $("next-btn").hidden = false;
-  $("next-btn").innerHTML = current === QUESTIONS.length - 1 ? 'See my gummy match <span class="btn-arrow">→</span>' : 'Next question <span class="btn-arrow">→</span>';
-  const feedback = $("feedback");
-  feedback.hidden = false; feedback.className = "feedback good";
-  feedback.innerHTML = `<span class="feedback-icon">♡</span><div><strong></strong><p></p></div>`;
-  feedback.querySelector("strong").textContent = choice.quip;
-  feedback.querySelector("p").textContent = "Answer saved. Continue when you're ready.";
-  playTone();
-  $("answered-count").textContent = `${answers.length} of ${QUESTIONS.length} answered`;
-  $("progress-fill").style.width = `${(answers.length / QUESTIONS.length) * 100}%`;
-  $("progress-bar").setAttribute("aria-valuenow", String(answers.length));
-  $("progress-label").textContent = `${Math.round((answers.length / QUESTIONS.length) * 100)}% complete`;
-  $("streak-number").textContent = String(answers.length);
+  $("next-btn").disabled = false;
 }
 function nextQuestion() {
-  hideCelebration();
-  if (answers[current] === undefined) return;
-  if (current < QUESTIONS.length - 1) { current += 1; renderQuestion(); }
-  else { endedAt = Date.now(); renderResults(); showScreen("results"); }
+  if (selected === null) return;
+  const q = QUESTIONS[current], choice = q.answers[selected];
+  answers[current] = { selected, type: choice.type };
+  [...$("answers").children].forEach((button, i) => { button.disabled = true; button.classList.toggle("selected", i === selected); });
+  playTone();
+  if (current < QUESTIONS.length - 1) {
+    current += 1; renderQuestion();
+  } else {
+    endedAt = Date.now(); renderResults(); showScreen("results"); saveParticipantResult();
+  }
 }
 function pickWinner() {
   const counts = { zing: 0, mellow: 0, sunny: 0 };
@@ -173,9 +150,9 @@ function renderResults() {
   $("score-ring").style.background = `conic-gradient(${type.color} 360deg, #e3e8d7 0deg)`;
   $("achievement").textContent = "YOUR GUMMY PERSONALITY";
   $("achievement-message").textContent = type.tagline;
-  $("accuracy-value").textContent = `${result.counts[result.winner]}/5`;
+  $("accuracy-value").textContent = `${result.counts[result.winner]}/${QUESTIONS.length}`;
   $("time-value").textContent = `${minutes}:${seconds}`;
-  $("best-streak-value").textContent = "5";
+  $("best-streak-value").textContent = String(answers.length);
   $("correct-count").textContent = String(result.counts.zing);
   $("wrong-count").textContent = String(result.counts.mellow);
   $("review-score-chip").textContent = `${result.counts.sunny} Sunny picks`;
@@ -188,7 +165,7 @@ function renderResults() {
   document.querySelector(".metric-wrong span:last-child").textContent = "Mellow picks";
   document.querySelector(".dashboard-heading h3").textContent = "Your flavour profile";
   document.querySelector(".dashboard-progress-title span").textContent = "Sunny picks";
-  document.querySelector(".dashboard-progress-title strong").textContent = `${result.counts.sunny}/5`;
+  document.querySelector(".dashboard-progress-title strong").textContent = `${result.counts.sunny}/${QUESTIONS.length}`;
   document.querySelector(".result-progress span").style.width = `${result.counts.sunny / QUESTIONS.length * 100}%`;
   document.querySelector(".result-note p").innerHTML = `<strong>Your match:</strong> ${type.pick}. ${type.tagline}`;
   $("review-list").innerHTML = "";
@@ -204,9 +181,41 @@ function renderResults() {
     card.append(top, title, your, explanation); $("review-list").appendChild(card);
   });
   $("share-btn").setAttribute("aria-label", "Share my gummy match");
+  $("coupon-code").textContent = COUPON_CODE;
+  $("save-status").classList.remove("error");
+  $("save-status").textContent = "Saving your result securely…";
 }
 function typeLabel(type) { return TYPES[type].name; }
-function showCelebration() {}
+async function saveParticipantResult() {
+  if (savedThisRun) return;
+  savedThisRun = true;
+  const config = window.SUPABASE_CONFIG || {};
+  if (!window.supabase || typeof window.supabase.createClient !== "function" || !config.url || !config.anonKey || config.url.includes("YOUR_PROJECT") || config.anonKey.includes("YOUR_SUPABASE")) {
+    $("save-status").classList.add("error");
+    $("save-status").textContent = "Your result is ready, but Supabase is not configured yet. Follow SUPABASE-SETUP.md to enable saving.";
+    return;
+  }
+  try {
+    const client = window.supabase.createClient(config.url, config.anonKey);
+    const result = pickWinner();
+    const { error } = await client.from("quiz_participants").insert({
+      name: participant.name,
+      mobile: participant.mobile,
+      email: participant.email || null,
+      address: participant.address || null,
+      result_type: TYPES[result.winner].name,
+      coupon_code: COUPON_CODE,
+      consent: true
+    });
+    if (error) throw error;
+    $("save-status").classList.remove("error");
+    $("save-status").textContent = "Your result has been saved. Thank you for playing!";
+  } catch (error) {
+    console.error("Supabase save failed:", error);
+    $("save-status").classList.add("error");
+    $("save-status").textContent = "Your result is ready, but we couldn't save your details. Please check the Supabase setup and try again.";
+  }
+}
 function hideCelebration() {
   const layer = $("celebration-layer");
   if (layer) { layer.classList.remove("show"); layer.setAttribute("aria-hidden", "true"); }
@@ -230,22 +239,47 @@ function showToast(message) {
 }
 async function shareResult() {
   const result = pickWinner(), type = TYPES[result.winner];
-  const text = `My Sake of Health gummy match is ${type.name}! ${type.tagline}`;
+  const text = `My Sake of Health gummy match is ${type.name}! ${type.tagline} Use my coupon code ${COUPON_CODE}.`;
   if (navigator.share) {
-    try { await navigator.share({ title: "My Sake of Health gummy match", text, url: "https://sakeofhealth.in/" }); }
+    try { await navigator.share({ title: "My Sake of Health gummy match", text, url: SHOP_URL }); }
     catch (err) { if (err && err.name !== "AbortError") showToast("Sharing isn’t available right now."); }
   } else if (navigator.clipboard && window.isSecureContext) {
     try { await navigator.clipboard.writeText(text); showToast("Your result message is copied!"); }
     catch (_) { showToast(text); }
   } else showToast(text);
 }
-$("start-btn").addEventListener("click", startQuiz);
-$("submit-btn").addEventListener("click", submitAnswer);
+$("participant-form").addEventListener("submit", (event) => {
+  event.preventDefault();
+  const name = $("participant-name").value.trim();
+  const mobile = $("participant-mobile").value.trim();
+  const email = $("participant-email").value.trim();
+  const address = $("participant-address").value.trim();
+  const consent = $("participant-consent").checked;
+  const error = $("form-error");
+  error.hidden = true; error.textContent = "";
+  if (name.length < 2) { error.textContent = "Please enter your name (at least 2 characters)."; error.hidden = false; $("participant-name").focus(); return; }
+  const digits = mobile.replace(/\D/g, "");
+  if (digits.length < 8 || digits.length > 15) { error.textContent = "Please enter a valid mobile number."; error.hidden = false; $("participant-mobile").focus(); return; }
+  if (email && !$("participant-email").checkValidity()) { error.textContent = "Please enter a valid email address or leave it blank."; error.hidden = false; $("participant-email").focus(); return; }
+  if (!consent) { error.textContent = "Please agree to the data storage notice to continue."; error.hidden = false; $("participant-consent").focus(); return; }
+  participant = { name, mobile, email, address };
+  startQuiz();
+});
 $("next-btn").addEventListener("click", nextQuestion);
 $("replay-btn").addEventListener("click", startQuiz);
 $("share-btn").addEventListener("click", shareResult);
+$("copy-coupon-btn").addEventListener("click", async () => {
+  try {
+    await navigator.clipboard.writeText(COUPON_CODE);
+    $("copy-coupon-btn").textContent = "Copied!";
+  } catch (_) {
+    const range = document.createRange(); range.selectNodeContents($("coupon-code"));
+    const selection = window.getSelection(); selection.removeAllRanges(); selection.addRange(range);
+    showToast("Select and copy the coupon code.");
+  }
+});
 $("quit-btn").addEventListener("click", () => {
-  if (answers.length && answers.length < QUESTIONS.length && !window.confirm("Exit the quiz? Your current progress will be lost.")) return;
+  if (answers.length && answers.length < QUESTIONS.length && !window.confirm("Exit the game? Your progress will be lost.")) return;
   hideCelebration(); showScreen("welcome");
 });
 $("sound-toggle").addEventListener("click", () => {

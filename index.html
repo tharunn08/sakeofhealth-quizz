@@ -6,11 +6,11 @@
   <meta name="theme-color" content="#fdf8f2">
   <link rel="icon" type="image/png" sizes="206x198" href="assets/favicon.png">
   <link rel="apple-touch-icon" href="assets/favicon.png">
-  <meta property="og:title" content="Wellness Quest | Sake of Health">
-  <meta property="og:description" content="Five quick questions. Find your Sake of Health gummy personality.">
+  <meta property="og:title" content="How Much Do You Know About You? | Sake of Health">
+  <meta property="og:description" content="Answer five fun questions and discover your Sake of Health gummy personality.">
   <meta property="og:type" content="website">
-  <meta name="description" content="Play the Sake of Health gummy quiz and discover whether you are The Zing, The Mellow, or The Sunny.">
-  <title>Wellness Quest | Sake of Health</title>
+  <meta name="description" content="Play the Sake of Health self-discovery game and find your gummy personality.">
+  <title>How Much Do You Know About You? | Sake of Health</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -33,8 +33,8 @@
     <section id="welcome-screen" class="screen welcome-screen active" aria-labelledby="welcome-title">
       <div class="welcome-copy">
         <div class="eyebrow"><span class="sparkle">✦</span> A LITTLE GAME FOR A HEALTHIER YOU</div>
-        <h1 id="welcome-title">Small steps.<br><em>Wellness wins.</em></h1>
-        <p class="lead">Answer five fun questions and discover the gummy personality that matches your vibe.</p>
+        <h1 id="welcome-title">How much do you<br><em>know about you?</em></h1>
+        <p class="lead">A few fun choices, a little self-discovery, and a gummy personality that matches your vibe.</p>
         <div class="welcome-meta">
           <span><span class="meta-icon">◷</span> 2 minutes</span>
           <span class="meta-divider"></span>
@@ -42,8 +42,20 @@
           <span class="meta-divider"></span>
           <span><span class="meta-icon">♡</span> Just for fun</span>
         </div>
-        <button id="start-btn" class="btn btn-primary btn-large" type="button">Let’s play <span class="btn-arrow">↗</span></button>
-        <p class="micro-copy">No sign-up. No pressure. Just find your gummy vibe.</p>
+        <form id="participant-form" class="participant-form" novalidate>
+          <label for="participant-name">Your name <span>*</span></label>
+          <input id="participant-name" name="name" type="text" autocomplete="name" maxlength="100" placeholder="Enter your name" required>
+          <label for="participant-mobile">Mobile number <span>*</span></label>
+          <input id="participant-mobile" name="mobile" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="Enter your mobile number" required>
+          <label for="participant-email">Email <small>(optional)</small></label>
+          <input id="participant-email" name="email" type="email" autocomplete="email" maxlength="254" placeholder="you@example.com">
+          <label for="participant-address">Address <small>(optional)</small></label>
+          <textarea id="participant-address" name="address" autocomplete="street-address" maxlength="500" rows="2" placeholder="Your address"></textarea>
+          <label class="consent-label"><input id="participant-consent" type="checkbox" required> <span>I agree that Sake of Health may store these details with my game result.</span></label>
+          <p class="form-error" id="form-error" role="alert" hidden></p>
+          <button id="start-btn" class="btn btn-primary btn-large" type="submit">Let’s play <span class="btn-arrow">↗</span></button>
+          <p class="micro-copy">Name and mobile are required. Email and address are optional. Your details are saved when you finish the game.</p>
+        </form>
       </div>
       <div class="hero-art" aria-label="Illustration of wellness leaves, fruit and a gummy jar">
         <div class="art-orbit orbit-one"></div><div class="art-orbit orbit-two"></div>
@@ -75,18 +87,17 @@
           <h2 id="question-title">Question goes here</h2>
           <p id="question-hint" class="question-hint">Choose the answer that feels right.</p>
           <div id="answers" class="answers" role="group" aria-label="Answer choices"></div>
-          <div id="feedback" class="feedback" aria-live="polite" hidden></div>
+          
           <div class="question-actions">
-            <span class="no-pressure"><span>♡</span> Take your best guess</span>
-            <button id="submit-btn" class="btn btn-primary" type="button" disabled>Check answer <span class="btn-arrow">→</span></button>
-            <button id="next-btn" class="btn btn-primary" type="button" hidden>Next question <span class="btn-arrow">→</span></button>
+            <span class="no-pressure"><span>♡</span> There are no right or wrong answers</span>
+            <button id="next-btn" class="btn btn-primary" type="button" disabled>Next question <span class="btn-arrow">→</span></button>
           </div>
         </div>
         <aside class="quiz-aside">
           <div class="aside-illustration"><div class="aside-circle"></div><div class="aside-leaf leaf-one"></div><div class="aside-leaf leaf-two"></div><div class="aside-fruit">✿</div><div class="aside-spark">✦</div></div>
           <p class="aside-quote">“Your health is built from the little things you do every day.”</p>
           <div class="aside-divider"></div>
-          <div class="aside-stat"><span class="stat-icon">✧</span><div><strong id="streak-number">0</strong><small>correct in a row</small></div></div>
+          <div class="aside-stat"><span class="stat-icon">✧</span><div><strong id="streak-number">0</strong><small>answers chosen</small></div></div>
           <div class="aside-note">Every answer is a chance to learn something new.</div>
         </aside>
       </div>
@@ -128,6 +139,14 @@
         <div class="review-heading"><div><span class="section-kicker">A QUICK RECAP</span><h3>Let’s look at your answers</h3><p>Your choices make up your gummy match.</p></div><span id="review-score-chip" class="review-chip">Your answers</span></div>
         <div id="review-list" class="review-list"></div>
       </div>
+      <section class="coupon-card" aria-labelledby="coupon-title">
+        <div class="coupon-sparkle" aria-hidden="true">✦</div>
+        <p class="section-kicker">A LITTLE SOMETHING FOR YOU</p>
+        <h2 id="coupon-title">Your feel-good treat</h2>
+        <p>Use this coupon on your next Sake of Health order.</p>
+        <div class="coupon-code-row"><code id="coupon-code">SOH-BUYNOW10</code><button id="copy-coupon-btn" class="btn btn-outline" type="button">Copy code</button></div>
+        <p id="save-status" class="save-status" role="status" aria-live="polite">Preparing your result…</p>
+      </section>
       <div class="results-actions">
         <button id="replay-btn" class="btn btn-primary btn-large" type="button">Play again <span class="btn-arrow">↻</span></button>
         <a class="btn btn-light btn-large" href="https://sakeofhealth.in/" target="_blank" rel="noopener">Explore Sake of Health <span class="btn-arrow">↗</span></a>
@@ -148,6 +167,8 @@
     </div>
   </div>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
